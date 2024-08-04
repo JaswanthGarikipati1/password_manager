@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index-style.css') }}">
+    <title>Password Manager</title>
+
+
+    <script>
+        function checkPasswordStrength() {
+            var password = document.getElementById('password').value;
+            var strengthIndicator = document.getElementById('password-strength');
+
+            // Define password strength conditions
+            var conditions = [
+                /[a-z]/, // lowercase
+                /[A-Z]/, // uppercase
+                /\d/, // digits
+                /[!@#$%^&*(),.?":{}|<>]/ // special characters
+            ];
+
+            // Check password length condition separately
+            var lengthCondition = /.{8,}/;
+
+            // Calculate password strength
+            var strength = conditions.reduce(function(count, condition) {
+                return count + (condition.test(password) ? 1 : 0);
+            }, 0);
+
+            // Check password length
+            var meetsLengthCondition = lengthCondition.test(password);
+
+            // Display password strength indicator
+            var indicators = ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'];
+            strengthIndicator.innerHTML = 'Password Strength: ' + indicators[strength];
+            strengthIndicator.style.color = getColorForStrength(strength);
+        }
+
+        function getColorForStrength(strength) {
+            // Customize colors based on strength level
+            if (strength === 0) return 'red'; // Very Weak
+            if (strength === 1) return 'orange'; // Weak
+            if (strength === 2) return 'yellow'; // Moderate
+            if (strength === 3) return 'lightgreen'; // Strong
+            if (strength === 4) return 'green'; // Very Strong
+        }
+
+        function validatePasswordStrength() {
+            var password = document.getElementById('password').value;
+
+            // Define password strength conditions
+            var conditions = [
+                /[a-z]/, // lowercase
+                /[A-Z]/, // uppercase
+                /\d/, // digits
+                /[!@#$%^&*(),.?":{}|<>]/, // special characters
+            ];
+
+            // Check password length condition separately
+            var lengthCondition = /.{8,}/;
+
+            // Check if the password meets all conditions
+            var meetsAllConditions = conditions.every(function(condition) {
+                return condition.test(password);
+            });
+
+            // Check if the password meets the length condition
+            var meetsLengthCondition = lengthCondition.test(password);
+
+            // Check if the password strength is good enough
+            if (meetsAllConditions && meetsLengthCondition) {
+                // Password meets all conditions, proceed with form submission
+                return true;
+            } else {
+                // Password does not meet the required conditions
+                alert('Password must meet all conditions:\n' +
+                    '- At least one lowercase letter\n' +
+                    '- At least one uppercase letter\n' +
+                    '- At least one digit\n' +
+                    '- At least one special character (!@#$%^&*(),.?":{}|<>)\n' +
+                    '- Minimum length of 8 characters');
+                return false;
+            }
+        }
+
+        function togglePasswordVisibility() {
+            var passwordInput = document.getElementById('password');
+            var showPasswordButton = document.getElementById('show-password');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                showPasswordButton.textContent = 'Hide Password';
+            } else {
+                passwordInput.type = 'password';
+                showPasswordButton.textContent = 'Show Password';
+            }
+        }
+
+
+        function generateRandomPassword() {
+            var lowercase = 'abcdefghijklmnopqrstuvwxyz';
+            var uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var digits = '0123456789';
+            var specialChars = '!@#$%^&*(),.?":{}|<>';
+
+            var allChars = lowercase + uppercase + digits + specialChars;
+            var password = '';
+
+            // Include at least one character from each category
+            password += getRandomChar(lowercase);
+            password += getRandomChar(uppercase);
+            password += getRandomChar(digits);
+            password += getRandomChar(specialChars);
+
+            // Fill the rest of the password with random characters
+            for (var i = password.length; i < 12; i++) {
+                password += getRandomChar(allChars);
+            }
+
+            // Shuffle the password to make it more random
+            password = password.split('').sort(function() {
+                return 0.5 - Math.random();
+            }).join('');
+
+            document.getElementById('password').value = password;
+            checkPasswordStrength(); // Update the password strength indicator
+        }
+
+        function getRandomChar(characters) {
+            var randomIndex = Math.floor(Math.random() * characters.length);
+            return characters.charAt(randomIndex);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check if a flash message exists
+            var flashMessage = "{{ get_flashed_messages()|first }}";
+
+            if (flashMessage) {
+                // Display a pop-up message
+                alert(flashMessage);
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+    <h1>Password Manager</h1>
+
+    <form action="{{ url_for('password_manager.add_entry') }}" method="post" onsubmit="return validatePasswordStrength()">
+        <label for="website">Website:</label>
+        <input type="text" name="website" required><br>
+        <label for="username">Username:</label>
+        <input type="text" name="username" required><br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required oninput="checkPasswordStrength()">
+        <span id="password-strength" class="strength-indicator"></span><br>
+        <button type="button" id="show-password" onclick="togglePasswordVisibility()">Show Password</button> <br>
+
+        <ul>Password conditions:</ul>
+        <li>At least one lowercase letter</li>
+        <li>At least one uppercase letter</li>
+        <li>At least one digit</li>
+        <li>At least one special character (!@#$%^&*(),.?":{}|
+            <>)</li>
+        <li>Minimum length of 8 characters</li>
+
+        <button type="button" onclick="generateRandomPassword()">Generate Random Password</button>
+        <button type="submit">Add Password</button>
+    </form>
+
+    <br> Click <a href="{{ url_for('password_manager.admin_login') }}">here</a> for admin access
+
+</body>
+
+</html>
